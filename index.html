@@ -2,24 +2,34 @@
 <html>
 <head>
   <script>
-    // Extract token from URL
+    // Extract token from URL hash
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const token = params.get('access_token');
     const state = params.get('state');
-    
-    // Verify state matches what we expect
-    const storedState = localStorage.getItem('spotify_auth_state');
-    
-    if (token && state && state === storedState) {
-      // Redirect back to local file with token
-      window.location.href = `audio-player.html#spotify_token=${token}`;
-    } else {
-      document.body.innerHTML = '<h1>Authentication failed</h1>';
+    const error = params.get('error');
+
+    if (error) {
+      // Send error back to opener
+      window.opener?.postMessage({
+        type: 'spotify_error',
+        error: error
+      }, 'https://pencilpwner.github.io');
+    } 
+    else if (token && state) {
+      // Send token back to opener
+      window.opener?.postMessage({
+        type: 'spotify_token',
+        token: token,
+        state: state
+      }, 'https://pencilpwner.github.io');
     }
+    
+    // Close the window
+    window.close();
   </script>
 </head>
 <body>
-  Redirecting back to player...
+  Redirecting back to application...
 </body>
 </html>
