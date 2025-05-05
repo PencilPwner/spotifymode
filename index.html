@@ -1,19 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script>
-        // Extract token from URL fragment
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const token = params.get('access_token');
-        
-        // Redirect back to local file with token
-        if(token) {
-            window.location.href = `file:///path/to/your/audio-player.html#spotify_token=${token}`;
-        }
-    </script>
-</head>
-<body>
-    Redirecting back to your player...
-</body>
-</html>
+const SPOTIFY_CLIENT_ID = '19e51a47eefc455b91817ca564a504ec'; // Replace with yours
+const SPOTIFY_REDIRECT_URI = 'https://oauth.pst.qa'; // Free public OAuth proxy
+
+function authenticateSpotify() {
+  // Generate a unique state token to match the response later
+  const state = Math.random().toString(36).substring(7);
+  localStorage.setItem('spotify_auth_state', state);
+  
+  // Open auth in a popup (bypasses redirect URI issues)
+  const authWindow = window.open(
+    `https://accounts.spotify.com/authorize?response_type=token` +
+    `&client_id=${SPOTIFY_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(SPOTIFY_REDIRECT_URI)}` +
+    `&state=${state}` +
+    `&scope=streaming%20user-read-email%20user-read-private` +
+    `&show_dialog=true`,
+    'Spotify Auth',
+    'width=600,height=700'
+  );
+
+  // Check for auth completion every 500ms
+  const authCheck = setInterval(() => {
+    try {
+      if (authWindow.closed) {
+        clearInterval(authCheck);
+        checkLocalStorageForToken();
+      }
+    } catch (e) {
+      clearInterval(authCheck);
+    }
+  }, 500);
+}
+
+function checkLocalStorageForToken() {
+  const token = localStorage.getItem('spotifyAccessToken');
+  if (token) {
+    initializeSpotifyPlayer(token);
+    spotifyToggle.innerHTML = `✅ Spotify Connected`;
+  }
+}
