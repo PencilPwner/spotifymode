@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        // Extract token from URL fragment
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const token = params.get('access_token');
+        
+        // Redirect back to local file with token
+        if(token) {
+            window.location.href = `file:///path/to/your/audio-player.html#spotify_token=${token}`;
+        }
+    </script>
+</head>
+<body>
+    Redirecting back to your player...
+</body>
+</html>
